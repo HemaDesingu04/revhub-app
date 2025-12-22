@@ -1,0 +1,86 @@
+<!-- Top Navigation Bar -->
+<nav class="navbar navbar-expand-lg fixed-top">
+  <div class="container-fluid px-4">
+    <a class="navbar-brand fw-bold" href="#">
+      <i class="fas fa-rocket me-2"></i>RevHub
+    </a>
+    
+    <div class="d-flex align-items-center gap-3">
+      <a class="btn btn-link nav-link" href="/dashboard">
+        <i class="fas fa-home me-1"></i>Feed
+      </a>
+      <a class="btn btn-link nav-link" href="/dashboard">
+        <i class="fas fa-plus me-1"></i>Create
+      </a>
+      <a class="btn btn-link nav-link" href="/chat">
+        <i class="fas fa-comments me-1"></i>Chat
+      </a>
+      <button class="btn btn-link nav-link active">
+        <i class="fas fa-bell me-1"></i>Notifications
+      </button>
+      <a class="btn btn-link nav-link" href="/dashboard">
+        <i class="fas fa-user me-1"></i>Profile
+      </a>
+      <a class="btn btn-outline-danger btn-sm" href="/auth/login">
+        <i class="fas fa-sign-out-alt me-1"></i>Logout
+      </a>
+    </div>
+  </div>
+</nav>
+
+<div class="container" style="margin-top: 80px;">
+<div class="row">
+  <div class="col-md-8 mx-auto">
+    <h2 class="mb-4">Notifications</h2>
+    
+    <div *ngIf="isLoading" class="text-center">
+      <div class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+    
+    <div *ngIf="!isLoading && notifications.length === 0" class="text-center text-muted">
+      <p>No notifications yet</p>
+    </div>
+    
+    <div class="list-group" *ngIf="!isLoading && notifications.length > 0">
+      <div *ngFor="let notification of notifications" 
+           class="list-group-item d-flex justify-content-between align-items-start"
+           [class.list-group-item-light]="notification.readStatus"
+           [class.bg-light]="!notification.readStatus"
+           (click)="markAsRead(notification)">
+        <div class="d-flex w-100">
+          <img *ngIf="notification.fromUserProfilePicture" 
+               [src]="notification.fromUserProfilePicture" 
+               class="rounded-circle me-3" 
+               style="width: 40px; height: 40px; object-fit: cover;" 
+               alt="Profile">
+          <div class="flex-grow-1">
+            <div class="d-flex w-100 justify-content-between">
+              <h6 class="mb-1" [class.fw-bold]="!notification.readStatus">
+                {{notification.type === 'FOLLOW_REQUEST' ? 'Follow Request' : 
+                  notification.type === 'FOLLOW' ? 'New Follower' : notification.type}}
+              </h6>
+              <small class="text-muted">{{notification.createdDate | date:'short'}}</small>
+            </div>
+            <p class="mb-1">{{notification.message}}</p>
+            
+            <!-- Follow Request Actions -->
+            <div *ngIf="isFollowRequest(notification)" class="mt-2">
+              <button class="btn btn-sm btn-primary me-2" 
+                      (click)="acceptFollowRequest(notification); $event.stopPropagation()">
+                Accept
+              </button>
+              <button class="btn btn-sm btn-outline-secondary" 
+                      (click)="rejectFollowRequest(notification); $event.stopPropagation()">
+                Decline
+              </button>
+            </div>
+          </div>
+        </div>
+        <span *ngIf="!notification.readStatus" class="badge bg-primary rounded-pill">New</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>

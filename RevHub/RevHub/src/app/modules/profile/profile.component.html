@@ -1,0 +1,246 @@
+<div class="profile-container" *ngIf="!isLoading">
+  <!-- Profile Header -->
+  <div class="profile-header">
+    <div class="cover-photo">
+      <div class="cover-gradient"></div>
+    </div>
+    
+    <div class="profile-info-section">
+      <div class="avatar-wrapper">
+        <img [src]="user?.profilePicture || '../../../../public/profile.jpg'" 
+             class="profile-avatar" alt="Profile">
+      </div>
+      
+      <div class="user-details">
+        <h1 class="username">{{user?.username || 'Unknown User'}}</h1>
+        <p class="bio" *ngIf="user?.bio">{{user.bio}}</p>
+        <div class="user-stats">
+          <div class="stat-item">
+            <span class="count">{{posts.length}}</span>
+            <span class="label">Posts</span>
+          </div>
+          <div class="stat-item">
+            <span class="count">{{user?.followersCount || 0}}</span>
+            <span class="label">Followers</span>
+          </div>
+          <div class="stat-item">
+            <span class="count">{{user?.followingCount || 0}}</span>
+            <span class="label">Following</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="profile-actions">
+        <button *ngIf="isOwnProfile" class="btn btn-primary">
+          <i class="fas fa-edit"></i> Edit Profile
+        </button>
+        <button *ngIf="!isOwnProfile" 
+                class="btn" [class]="getFollowButtonClass()"
+                [disabled]="isFollowLoading || followStatus === 'PENDING'"
+                (click)="onFollowButtonClick()">
+          <span *ngIf="isFollowLoading" class="spinner-border spinner-border-sm me-2"></span>
+          {{getFollowButtonText()}}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile Stats Card -->
+  <div class="profile-stats-card">
+    <div class="stats-grid">
+      <div class="stat-box">
+        <i class="fas fa-images stat-icon"></i>
+        <div class="stat-info">
+          <span class="stat-number">{{posts.length}}</span>
+          <span class="stat-text">Posts</span>
+        </div>
+      </div>
+      <div class="stat-box">
+        <i class="fas fa-heart stat-icon"></i>
+        <div class="stat-info">
+          <span class="stat-number">{{getTotalLikes()}}</span>
+          <span class="stat-text">Likes Received</span>
+        </div>
+      </div>
+      <div class="stat-box">
+        <i class="fas fa-comments stat-icon"></i>
+        <div class="stat-info">
+          <span class="stat-number">{{getTotalComments()}}</span>
+          <span class="stat-text">Comments Received</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="recent-activity">
+      <h4><i class="fas fa-clock"></i> Recent Activity</h4>
+      <div class="activity-list">
+        <div class="activity-item" *ngFor="let activity of getRecentActivity()">
+          <i class="fas" [class]="activity.icon"></i>
+          <span>{{activity.text}}</span>
+          <small>{{activity.date | date:'short'}}</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="tab-navigation">
+    <button class="tab-btn" [class.active]="activeTab === 'posts'" (click)="setActiveTab('posts')">
+      <i class="fas fa-th-large"></i> Posts
+    </button>
+    <button class="tab-btn" [class.active]="activeTab === 'about'" (click)="setActiveTab('about')">
+      <i class="fas fa-user"></i> About
+    </button>
+    <button class="tab-btn" [class.active]="activeTab === 'followers'" (click)="setActiveTab('followers')">
+      <i class="fas fa-users"></i> Followers
+    </button>
+    <button class="tab-btn" [class.active]="activeTab === 'following'" (click)="setActiveTab('following')">
+      <i class="fas fa-user-friends"></i> Following
+    </button>
+  </div>
+
+  <!-- Tab Content -->
+  <div class="tab-content">
+    <!-- Posts Tab -->
+    <div *ngIf="activeTab === 'posts'" class="posts-grid">
+      <div class="post-card" *ngFor="let post of posts">
+        <div *ngIf="post.imageUrl" class="post-image">
+          <img [src]="post.imageUrl" alt="Post">
+          <div class="post-overlay">
+            <span><i class="fas fa-heart"></i> {{post.likesCount}}</span>
+            <span><i class="fas fa-comment"></i> {{post.commentsCount}}</span>
+          </div>
+        </div>
+        <div class="post-content">
+          <p>{{post.content}}</p>
+          <div class="post-actions">
+            <button class="btn-like" [class.liked]="post.isLiked" (click)="likePost(post)">
+              <i class="fas fa-heart"></i> {{post.likesCount}}
+            </button>
+            <button class="btn-comment" (click)="commentPost(post)">
+              <i class="fas fa-comment"></i> {{post.commentsCount}}
+            </button>
+          </div>
+        </div>
+        
+        <!-- Comments -->
+        <div *ngIf="showComments[post.id]" class="comments-section">
+          <div *ngFor="let comment of post.commentsList" class="comment">
+            <img [src]="comment.author?.profilePicture || 'default.jpg'" class="comment-avatar">
+            <div class="comment-body">
+              <strong>{{comment.author?.username}}</strong>
+              <p>{{comment.content}}</p>
+              <small>{{comment.createdDate | date:'short'}}</small>
+            </div>
+            <button *ngIf="canDeleteComment(comment, post)" 
+                    class="btn-delete" (click)="deleteComment(post, comment.id)">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+          <div class="add-comment">
+            <input type="text" [(ngModel)]="newComment" placeholder="Add a comment..." 
+                   (keyup.enter)="addComment(post)">
+            <button (click)="addComment(post)" [disabled]="!newComment?.trim()">
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div *ngIf="posts.length === 0" class="empty-state">
+        <i class="fas fa-camera"></i>
+        <h3>No posts yet</h3>
+        <p>{{isOwnProfile ? 'Share your first moment!' : 'No posts to show'}}</p>
+      </div>
+    </div>
+
+    <!-- About Tab -->
+    <div *ngIf="activeTab === 'about'" class="about-section">
+      <div class="info-card">
+        <h3><i class="fas fa-info-circle"></i> Personal Information</h3>
+        <div class="info-item">
+          <label>Email:</label>
+          <span>{{user?.email}}</span>
+        </div>
+        <div class="info-item">
+          <label>Member Since:</label>
+          <span>{{user?.createdDate | date:'MMMM yyyy'}}</span>
+        </div>
+        <div class="info-item" *ngIf="user?.isPrivate">
+          <label>Account Type:</label>
+          <span><i class="fas fa-lock"></i> Private Account</span>
+        </div>
+      </div>
+      
+      <div class="info-card">
+        <h3><i class="fas fa-heart"></i> Interests</h3>
+        <div class="interests-grid">
+          <span class="interest-tag">Photography</span>
+          <span class="interest-tag">Travel</span>
+          <span class="interest-tag">Technology</span>
+          <span class="interest-tag">Music</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Followers Tab -->
+    <div *ngIf="activeTab === 'followers'" class="followers-section">
+      <div class="user-list">
+        <div class="user-item" *ngFor="let follower of followers">
+          <img [src]="follower.profilePicture || 'default.jpg'" class="user-avatar">
+          <div class="user-info">
+            <h4>{{follower.username}}</h4>
+            <p>{{follower.bio || 'No bio available'}}</p>
+          </div>
+          <button class="btn btn-outline-primary" *ngIf="!isOwnProfile">
+            Follow
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Following Tab -->
+    <div *ngIf="activeTab === 'following'" class="following-section">
+      <div class="user-list">
+        <div class="user-item" *ngFor="let following of followingList">
+          <img [src]="following.profilePicture || 'default.jpg'" class="user-avatar">
+          <div class="user-info">
+            <h4>{{following.username}}</h4>
+            <p>{{following.bio || 'No bio available'}}</p>
+          </div>
+          <button class="btn btn-outline-danger" *ngIf="isOwnProfile">
+            Unfollow
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row" *ngIf="isLoading">
+  <div class="col-md-8 mx-auto text-center">
+    <div class="spinner-border" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2">Loading profile...</p>
+  </div>
+</div>
+
+<!-- Delete Comment Confirmation Modal -->
+<div class="modal fade show" style="display: block; z-index: 1050;" *ngIf="showDeleteCommentConfirm">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="background: white; border: 1px solid #dee2e6; box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);">
+      <div class="modal-header" style="background: #f8f9fa; border-bottom: 1px solid #dee2e6;">
+        <h5 class="modal-title" style="color: #dc3545; font-weight: bold;">Delete Comment</h5>
+      </div>
+      <div class="modal-body" style="padding: 1.5rem; background: white;">
+        <p style="color: #495057; margin-bottom: 0;">Are you sure you want to delete this comment? This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer" style="background: #f8f9fa; border-top: 1px solid #dee2e6;">
+        <button type="button" class="btn btn-secondary" (click)="cancelDeleteComment()" style="background: #6c757d; border-color: #6c757d;">Cancel</button>
+        <button type="button" class="btn btn-danger" (click)="confirmDeleteComment()" style="background: #dc3545; border-color: #dc3545;">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1040;" *ngIf="showDeleteCommentConfirm"></div>

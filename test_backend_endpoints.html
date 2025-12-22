@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>RevHub Backend Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .success { color: green; }
+        .error { color: red; }
+        button { margin: 5px; padding: 10px; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>RevHub Backend Endpoint Test</h1>
+    
+    <div class="test-section">
+        <h3>Authentication Test</h3>
+        <button onclick="testLogin()">Test Login</button>
+        <div id="auth-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Chat Endpoints Test</h3>
+        <button onclick="testChatContacts()">Test Chat Contacts</button>
+        <button onclick="testChatConversation()">Test Conversation</button>
+        <div id="chat-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Notification Endpoints Test</h3>
+        <button onclick="testNotifications()">Test Notifications</button>
+        <button onclick="testNotificationCount()">Test Unread Count</button>
+        <div id="notification-result"></div>
+    </div>
+
+    <script>
+        let authToken = null;
+        const baseUrl = 'http://localhost:8080';
+
+        async function testLogin() {
+            const resultDiv = document.getElementById('auth-result');
+            try {
+                const response = await fetch(`${baseUrl}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: 'testuser1',
+                        password: 'password123'
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.token;
+                    resultDiv.innerHTML = `<div class="success">✅ Login successful! Token: ${authToken?.substring(0, 20)}...</div>`;
+                } else {
+                    const error = await response.text();
+                    resultDiv.innerHTML = `<div class="error">❌ Login failed: ${error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Network error: ${error.message}</div>`;
+            }
+        }
+
+        async function testChatContacts() {
+            const resultDiv = document.getElementById('chat-result');
+            if (!authToken) {
+                resultDiv.innerHTML = '<div class="error">❌ Please login first</div>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${baseUrl}/chat/contacts`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `<div class="success">✅ Chat contacts loaded: ${data.length} contacts</div><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    const error = await response.text();
+                    resultDiv.innerHTML = `<div class="error">❌ Chat contacts failed: ${error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Network error: ${error.message}</div>`;
+            }
+        }
+
+        async function testChatConversation() {
+            const resultDiv = document.getElementById('chat-result');
+            if (!authToken) {
+                resultDiv.innerHTML = '<div class="error">❌ Please login first</div>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${baseUrl}/chat/conversation/testuser2`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `<div class="success">✅ Conversation loaded: ${data.length} messages</div><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    const error = await response.text();
+                    resultDiv.innerHTML = `<div class="error">❌ Conversation failed: ${error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Network error: ${error.message}</div>`;
+            }
+        }
+
+        async function testNotifications() {
+            const resultDiv = document.getElementById('notification-result');
+            if (!authToken) {
+                resultDiv.innerHTML = '<div class="error">❌ Please login first</div>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${baseUrl}/notifications`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `<div class="success">✅ Notifications loaded: ${data.length} notifications</div><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    const error = await response.text();
+                    resultDiv.innerHTML = `<div class="error">❌ Notifications failed: ${error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Network error: ${error.message}</div>`;
+            }
+        }
+
+        async function testNotificationCount() {
+            const resultDiv = document.getElementById('notification-result');
+            if (!authToken) {
+                resultDiv.innerHTML = '<div class="error">❌ Please login first</div>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${baseUrl}/notifications/unread-count`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `<div class="success">✅ Unread count: ${data}</div>`;
+                } else {
+                    const error = await response.text();
+                    resultDiv.innerHTML = `<div class="error">❌ Unread count failed: ${error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Network error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+<div class="bg-primary text-white p-4 rounded">
+  <div class="d-flex align-items-center">
+    <img 
+      [src]="user?.profilePicture || 'https://via.placeholder.com/80'" 
+      class="rounded-circle me-3" 
+      alt="Profile"
+      style="width: 80px; height: 80px; object-fit: cover;">
+    <div>
+      <h4 class="mb-1">{{user?.username || 'Loading...'}}</h4>
+      <p class="mb-0">{{user?.email || ''}}</p>
+      <small>Joined {{user?.createdDate | date:'MMMM yyyy' || 'Unknown'}}</small>
+    </div>
+  </div>
+</div>

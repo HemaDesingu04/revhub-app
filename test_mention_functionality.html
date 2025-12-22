@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Mention Functionality</title>
+</head>
+<body>
+    <h1>Test Mention Functionality</h1>
+    
+    <div>
+        <h3>1. Login First</h3>
+        <input type="text" id="username" placeholder="Username" value="testuser">
+        <input type="password" id="password" placeholder="Password" value="password">
+        <button onclick="login()">Login</button>
+        <div id="loginResult"></div>
+    </div>
+    
+    <div>
+        <h3>2. Test Mention</h3>
+        <textarea id="postContent" placeholder="Enter post content with @username">Hello @testuser, this is a mention test!</textarea>
+        <button onclick="testMention()">Create Post with Mention</button>
+        <div id="mentionResult"></div>
+    </div>
+
+    <script>
+        let authToken = '';
+
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await fetch('http://localhost:8080/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.token;
+                    document.getElementById('loginResult').innerHTML = 
+                        '<span style="color: green;">Login successful! Token: ' + authToken.substring(0, 20) + '...</span>';
+                } else {
+                    document.getElementById('loginResult').innerHTML = 
+                        '<span style="color: red;">Login failed</span>';
+                }
+            } catch (error) {
+                document.getElementById('loginResult').innerHTML = 
+                    '<span style="color: red;">Error: ' + error.message + '</span>';
+            }
+        }
+
+        async function testMention() {
+            if (!authToken) {
+                alert('Please login first');
+                return;
+            }
+            
+            const content = document.getElementById('postContent').value;
+            
+            try {
+                const response = await fetch('http://localhost:8080/posts/test-mention?content=' + encodeURIComponent(content), {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + authToken,
+                    }
+                });
+                
+                const result = await response.text();
+                document.getElementById('mentionResult').innerHTML = 
+                    '<span style="color: ' + (response.ok ? 'green' : 'red') + ';">' + result + '</span>';
+                    
+                console.log('Check the backend console for mention processing logs');
+            } catch (error) {
+                document.getElementById('mentionResult').innerHTML = 
+                    '<span style="color: red;">Error: ' + error.message + '</span>';
+            }
+        }
+    </script>
+</body>
+</html>

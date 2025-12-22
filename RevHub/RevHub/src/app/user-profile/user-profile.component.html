@@ -1,0 +1,245 @@
+<div class="profile-container">
+  <!-- TEST: New Profile Layout -->
+  <div style="background: red; color: white; padding: 10px; text-align: center; font-weight: bold;">
+    NEW PROFILE LAYOUT LOADED!
+  </div>
+  <nav class="navbar navbar-dark fixed-top">
+    <div class="container">
+      <button class="btn btn-outline-light btn-sm" (click)="goBack()">← Back</button>
+      <h1 class="navbar-brand" style="font-family: 'Momo Signature', cursive; font-size: 28px; color: #fff;">RevHub</h1>
+      <div></div>
+    </div>
+  </nav>
+
+  <div class="main-content" style="margin-top: 80px;">
+    <div *ngIf="isLoading" class="text-center">
+      <div class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+
+    <div *ngIf="!isLoading && user" class="profile-wrapper">
+      <!-- Profile Header -->
+      <div class="profile-header">
+        <div class="cover-photo">
+          <div class="cover-gradient"></div>
+        </div>
+        
+        <div class="profile-info-section">
+          <div class="avatar-wrapper">
+            <img [src]="user.profilePicture || 'default.jpg'" 
+                 class="profile-avatar" alt="Profile">
+          </div>
+          
+          <div class="user-details">
+            <h1 class="username">{{user.username}}</h1>
+            <p class="bio" *ngIf="user.bio">{{user.bio}}</p>
+            <div class="user-stats">
+              <div class="stat-item">
+                <span class="count">{{userPosts.length}}</span>
+                <span class="label">Posts</span>
+              </div>
+              <div class="stat-item">
+                <span class="count">{{followersCount}}</span>
+                <span class="label">Followers</span>
+              </div>
+              <div class="stat-item">
+                <span class="count">{{followingCount}}</span>
+                <span class="label">Following</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="profile-actions">
+            <button *ngIf="followStatus === 'NOT_FOLLOWING'" class="btn btn-primary" (click)="followUser()">
+              <i class="fas fa-user-plus"></i> Follow
+            </button>
+            <button *ngIf="followStatus === 'PENDING'" class="btn btn-outline-warning" (click)="unfollowUser()">
+              <i class="fas fa-clock"></i> Requested
+            </button>
+            <button *ngIf="followStatus === 'ACCEPTED'" class="btn btn-outline-danger" (click)="unfollowUser()">
+              <i class="fas fa-user-check"></i> Unfollow
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profile Stats Card -->
+      <div class="profile-stats-card">
+        <div class="stats-grid">
+          <div class="stat-box">
+            <i class="fas fa-images stat-icon"></i>
+            <div class="stat-info">
+              <span class="stat-number">{{userPosts.length}}</span>
+              <span class="stat-text">Posts</span>
+            </div>
+          </div>
+          <div class="stat-box">
+            <i class="fas fa-heart stat-icon"></i>
+            <div class="stat-info">
+              <span class="stat-number">{{getTotalLikes()}}</span>
+              <span class="stat-text">Likes Received</span>
+            </div>
+          </div>
+          <div class="stat-box">
+            <i class="fas fa-comments stat-icon"></i>
+            <div class="stat-info">
+              <span class="stat-number">{{getTotalComments()}}</span>
+              <span class="stat-text">Comments Received</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="recent-activity">
+          <h4><i class="fas fa-clock"></i> Recent Activity</h4>
+          <div class="activity-list">
+            <div class="activity-item" *ngFor="let activity of getRecentActivity()">
+              <i class="fas" [class]="activity.icon"></i>
+              <span>{{activity.text}}</span>
+              <small>{{activity.date | date:'short'}}</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Navigation -->
+      <div class="tab-navigation">
+        <button class="tab-btn" [class.active]="activeTab === 'posts'" (click)="setActiveTab('posts')">
+          <i class="fas fa-th-large"></i> Posts
+        </button>
+        <button class="tab-btn" [class.active]="activeTab === 'about'" (click)="setActiveTab('about')">
+          <i class="fas fa-user"></i> About
+        </button>
+        <button class="tab-btn" [class.active]="activeTab === 'followers'" (click)="setActiveTab('followers')">
+          <i class="fas fa-users"></i> Followers
+        </button>
+        <button class="tab-btn" [class.active]="activeTab === 'following'" (click)="setActiveTab('following')">
+          <i class="fas fa-user-friends"></i> Following
+        </button>
+      </div>
+
+      <!-- Tab Content -->
+      <div class="tab-content">
+        <!-- Posts Tab -->
+        <div *ngIf="activeTab === 'posts'">
+          <div *ngIf="!canViewPosts" class="empty-state">
+            <i class="fas fa-lock"></i>
+            <h3>This account is private</h3>
+            <p>Follow to see their posts</p>
+          </div>
+          
+          <div *ngIf="canViewPosts && userPosts.length === 0" class="empty-state">
+            <i class="fas fa-camera"></i>
+            <h3>No posts yet</h3>
+            <p>No posts to show</p>
+          </div>
+          
+          <div *ngIf="canViewPosts" class="posts-grid">
+            <div class="post-card" *ngFor="let post of userPosts">
+              <div *ngIf="post.imageUrl" class="post-image">
+                <img *ngIf="post.mediaType === 'image' || (!post.mediaType && isImage(post.imageUrl))" 
+                     [src]="post.imageUrl" alt="Post">
+                <video *ngIf="post.mediaType === 'video' || (!post.mediaType && isVideo(post.imageUrl))" 
+                       [src]="post.imageUrl" controls autoplay muted loop></video>
+                <div class="post-overlay">
+                  <span><i class="fas fa-heart"></i> {{post.likesCount}}</span>
+                  <span><i class="fas fa-comment"></i> {{post.commentsCount}}</span>
+                </div>
+              </div>
+              <div class="post-content">
+                <p>{{post.content}}</p>
+                <div class="post-actions" *ngIf="!isOwnProfile()">
+                  <button class="btn-like" [class.liked]="post.isLiked" (click)="likePost(post)">
+                    <i class="fas fa-heart"></i> {{post.likesCount}}
+                  </button>
+                  <button class="btn-comment" (click)="commentPost(post)">
+                    <i class="fas fa-comment"></i> {{post.commentsCount}}
+                  </button>
+                  <button class="btn-share" (click)="sharePost(post)">
+                    <i class="fas fa-share"></i> {{post.sharesCount}}
+                  </button>
+                </div>
+              </div>
+              
+              <!-- Comments -->
+              <div *ngIf="showComments[post.id] && !isOwnProfile()" class="comments-section">
+                <div *ngFor="let comment of post.commentsList" class="comment">
+                  <img [src]="comment.author?.profilePicture || 'default.jpg'" class="comment-avatar">
+                  <div class="comment-body">
+                    <strong>{{comment.author?.username}}</strong>
+                    <p>{{comment.content}}</p>
+                    <small>{{comment.createdDate | date:'short'}}</small>
+                  </div>
+                </div>
+                <div class="add-comment">
+                  <input type="text" [(ngModel)]="newComment" placeholder="Add a comment..." 
+                         (keyup.enter)="addComment(post)">
+                  <button (click)="addComment(post)" [disabled]="!newComment || !newComment.trim()">
+                    <i class="fas fa-paper-plane"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- About Tab -->
+        <div *ngIf="activeTab === 'about'" class="about-section">
+          <div class="info-card">
+            <h3><i class="fas fa-info-circle"></i> Personal Information</h3>
+            <div class="info-item">
+              <label>Username:</label>
+              <span>{{ '@' + user.username }}</span>
+            </div>
+            <div class="info-item" *ngIf="user.bio">
+              <label>Bio:</label>
+              <span>{{user.bio}}</span>
+            </div>
+          </div>
+          
+          <div class="info-card">
+            <h3><i class="fas fa-heart"></i> Interests</h3>
+            <div class="interests-grid">
+              <span class="interest-tag">Photography</span>
+              <span class="interest-tag">Travel</span>
+              <span class="interest-tag">Technology</span>
+              <span class="interest-tag">Music</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Followers Tab -->
+        <div *ngIf="activeTab === 'followers'" class="followers-section">
+          <div class="user-list">
+            <div class="user-item" *ngFor="let follower of followers">
+              <img [src]="follower.profilePicture || 'default.jpg'" class="user-avatar">
+              <div class="user-info">
+                <h4>{{follower.username}}</h4>
+                <p>{{follower.bio || 'No bio available'}}</p>
+              </div>
+              <button class="btn btn-outline-primary">
+                Follow
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Following Tab -->
+        <div *ngIf="activeTab === 'following'" class="following-section">
+          <div class="user-list">
+            <div class="user-item" *ngFor="let following of followingList">
+              <img [src]="following.profilePicture || 'default.jpg'" class="user-avatar">
+              <div class="user-info">
+                <h4>{{following.username}}</h4>
+                <p>{{following.bio || 'No bio available'}}</p>
+              </div>
+              <button class="btn btn-outline-danger">
+                Unfollow
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

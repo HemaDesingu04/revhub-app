@@ -1,0 +1,116 @@
+<div class="row">
+  <div class="col-md-6 mx-auto">
+    <h2 class="mb-4">Create Post</h2>
+    <div class="card">
+      <div class="card-body">
+        <form (ngSubmit)="onSubmit()">
+          <div class="mb-3">
+            <div class="position-relative">
+              <textarea 
+                #contentTextarea
+                class="form-control" 
+                rows="4" 
+                placeholder="What's on your mind? Use #hashtags and @mentions"
+                [(ngModel)]="postData.content"
+                name="content"
+                (input)="onContentChange($event)"
+                (keyup)="onKeyUp($event)"
+                required></textarea>
+              
+              <!-- User suggestions dropdown -->
+              <div *ngIf="showUserSuggestions && userSuggestions.length > 0" 
+                   class="position-absolute bg-white border rounded shadow-sm" 
+                   style="top: 100%; left: 0; right: 0; z-index: 1000; max-height: 200px; overflow-y: auto;">
+                <div *ngFor="let user of userSuggestions; let i = index" 
+                     class="p-2 border-bottom cursor-pointer hover-bg-light"
+                     [class.bg-light]="selectedSuggestionIndex === i"
+                     (click)="selectUser(user)">
+                  <strong>@{{user.username}}</strong>
+                </div>
+              </div>
+            </div>
+            <small class="text-muted">Tip: Use #hashtags to categorize and @username to mention users. Start typing @ to see suggestions.</small>
+            
+            <!-- Show detected hashtags and mentions -->
+            <div *ngIf="hashtags.length > 0" class="mt-2">
+              <small class="text-primary">Hashtags: </small>
+              <span *ngFor="let tag of hashtags" class="badge bg-primary me-1">#{{tag}}</span>
+            </div>
+            <div *ngIf="mentions.length > 0" class="mt-1">
+              <small class="text-success">Mentions: </small>
+              <span *ngFor="let mention of mentions" class="badge bg-success me-1">@{{mention}}</span>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Visibility</label>
+            <select class="form-select" [(ngModel)]="postData.visibility" name="visibility">
+              <option value="PUBLIC">Public</option>
+              <option value="FOLLOWERS_ONLY">Followers Only</option>
+            </select>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Attach Media</label>
+            <input 
+              type="file" 
+              class="form-control" 
+              accept="image/*,video/*"
+              (change)="onFileSelected($event)">
+          </div>
+          
+          <!-- File Preview -->
+          <div class="mb-3" *ngIf="selectedFile && previewUrl">
+            <div class="position-relative">
+              <button 
+                type="button" 
+                class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2"
+                (click)="removeFile()"
+                style="z-index: 10;">
+                ×
+              </button>
+              
+              <!-- Image Preview -->
+              <img 
+                *ngIf="isImage(selectedFile)" 
+                [src]="previewUrl" 
+                class="img-fluid rounded" 
+                style="max-height: 300px;"
+                alt="Preview">
+              
+              <!-- Video Preview -->
+              <video 
+                *ngIf="isVideo(selectedFile)" 
+                [src]="previewUrl" 
+                class="img-fluid rounded" 
+                style="max-height: 300px;"
+                controls>
+                Your browser does not support the video tag.
+              </video>
+            </div>
+          </div>
+          
+          <div class="mb-3" *ngIf="errorMessage">
+            <div class="alert alert-danger">{{errorMessage}}</div>
+          </div>
+          
+          <div class="d-flex gap-2">
+            <button 
+              type="submit" 
+              class="btn btn-primary"
+              [disabled]="isLoading || !postData.content.trim()">
+              <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2"></span>
+              {{isLoading ? 'Posting...' : 'Post'}}
+            </button>
+            <button 
+              type="button" 
+              class="btn btn-secondary"
+              (click)="onCancel()">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
