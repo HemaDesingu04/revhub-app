@@ -155,7 +155,7 @@ def deployToEnvironment(environment) {
                 cd /home/ubuntu/revhub-${environment}
                 
                 # Download docker-compose file
-                curl -O https://raw.githubusercontent.com/your-username/Team4_RevHub/main/docker-compose.prod.yml
+                curl -O https://raw.githubusercontent.com/your-github-username/Team4_RevHub/main/docker-compose.prod.yml
                 
                 # Update image tags
                 sed -i "s|image: .*revhub-backend.*|image: ${BACKEND_IMAGE}:${BUILD_NUMBER}|g" docker-compose.prod.yml

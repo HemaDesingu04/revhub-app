@@ -8,7 +8,7 @@ services:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: revhubteam4
     ports:
-      - "3307:3306"
+      - "3308:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     restart: unless-stopped
@@ -25,6 +25,8 @@ services:
   backend:
     build: ./revHubBack
     container_name: revhub-backend
+    environment:
+      - TZ=Asia/Kolkata
     ports:
       - "8090:8080"
     depends_on:
@@ -35,6 +37,8 @@ services:
   frontend:
     build: ./RevHub
     container_name: revhub-frontend
+    environment:
+      - TZ=Asia/Kolkata
     ports:
       - "3000:80"
     depends_on:
