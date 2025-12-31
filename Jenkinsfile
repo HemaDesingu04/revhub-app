@@ -28,7 +28,7 @@ pipeline {
             }
             post {
                 always {
-                    junit testResultsPattern: 'revHubBack/target/surefire-reports/*.xml'
+                    junit testResults: 'revHubBack/target/surefire-reports/*.xml'
                 }
             }
         }
