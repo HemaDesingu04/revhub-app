@@ -28,7 +28,13 @@ pipeline {
             }
             post {
                 always {
-                    junit testResults: 'revHubBack/target/surefire-reports/*.xml'
+                    script {
+                        if (fileExists('revHubBack/target/surefire-reports/*.xml')) {
+                            junit testResults: 'revHubBack/target/surefire-reports/*.xml'
+                        } else {
+                            echo 'No test reports found - skipping junit step'
+                        }
+                    }
                 }
             }
         }
